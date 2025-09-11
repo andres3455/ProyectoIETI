@@ -1,12 +1,24 @@
 package com.ieti.proyectoieti.Models;
 
+import org.springframework.data.mongodb.core.mapping.Field;
 import java.time.LocalDateTime;
 
 public class Transaction {
+    @Field("user_id")
     private String userId;
+
+    @Field("amount")
     private double amount;
+
+    @Field("description")
     private String description;
+
+    @Field("date")
     private LocalDateTime date;
+
+    public Transaction() {
+        // Default constructor for MongoDB
+    }
 
     public Transaction(String userId, double amount, String description) {
         this.userId = userId;
@@ -46,6 +58,4 @@ public class Transaction {
     public void setDate(LocalDateTime date) {
         this.date = date;
     }
-
-    
 }
