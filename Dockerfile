@@ -6,10 +6,12 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Create non-root user
+# Install curl for healthcheck
+USER root
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN groupadd -r spring && useradd -r -g spring spring
 USER spring
 

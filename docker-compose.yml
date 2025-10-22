@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/proyectoieti
+      - GOOGLE_CLIENT_ID=dummy-client-id
+      - GOOGLE_CLIENT_SECRET=dummy-client-secret
+    depends_on:
+      - mongodb
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=proyectoieti
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

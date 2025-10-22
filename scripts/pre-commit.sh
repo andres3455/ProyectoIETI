@@ -25,9 +25,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Check for task comments in committed code
+# Check for pendent comments in staged files
 echo "Checking for TODO comments..."
-if git diff --cached --name-only | xargs grep -n "TODO"; then
+if git diff --cached --name-only | xargs grep -n "TODO" 2>/dev/null; then
     echo "TODO comments found in committed code! Please remove or address them."
     exit 1
 fi

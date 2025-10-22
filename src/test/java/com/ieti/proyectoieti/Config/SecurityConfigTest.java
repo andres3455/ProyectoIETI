@@ -76,7 +76,7 @@ class SecurityConfigTest {
 
     @Test
     @WithMockUser
-    void securedEndpoints_WithAuthentication_ShouldBeAccessible() throws Exception {
+    void  securedEndpoints_WithAuthentication_ShouldBeAccessible() throws Exception {
         mockMvc.perform(get("/api/wallets"))
                 .andExpect(status().isOk());
 
