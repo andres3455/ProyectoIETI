@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Add false positive suppressions here -->
+    <suppress>
+        <notes><![CDATA[
+        Suppress false positives for Spring Framework
+        ]]></notes>
+        <gav regex="true">^org\.springframework:spring-.*:.*$</gav>
+        <cpe>cpe:/a:springsource:spring_framework</cpe>
+    </suppress>
+</suppressions>
