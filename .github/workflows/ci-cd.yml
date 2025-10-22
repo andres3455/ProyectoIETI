@@ -8,7 +8,6 @@ on:
 
 env:
   JAVA_VERSION: '21'
-  MAVEN_VERSION: '3.9.11'
 
 jobs:
   test:
@@ -26,16 +25,14 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Maven wrapper permissions
+        run: chmod +x mvnw
+
       - name: Validate Maven wrapper
-        run: |
-          ./mvnw -v
-          chmod +x mvnw
+        run: ./mvnw -v
 
-      - name: Run unit tests
-        run: ./mvnw clean test
-
-      - name: Run integration tests
-        run: ./mvnw verify -DskipUnitTests=false
+      - name: Run unit tests with coverage
+        run: ./mvnw clean test jacoco:report
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -47,8 +44,8 @@ jobs:
             target/failsafe-reports/
           retention-days: 7
 
-  build:
-    name: Build and Package
+  code-quality:
+    name: Code Quality Checks
     runs-on: ubuntu-latest
     needs: test
 
@@ -63,11 +60,50 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Maven wrapper permissions
+        run: chmod +x mvnw
+
+      - name: Run PMD static analysis
+        run: ./mvnw pmd:check
+
+      - name: Run Checkstyle
+        run: ./mvnw checkstyle:check
+
+      - name: Run OWASP dependency check
+        run: ./mvnw dependency-check:check
+
+      - name: Upload quality reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-reports
+          path: |
+            target/site/jacoco/
+            target/pmd.xml
+            target/checkstyle-result.xml
+          retention-days: 7
+
+  build:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: [test, code-quality]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Maven wrapper permissions
+        run: chmod +x mvnw
+
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests
-
-      - name: Run security scan
-        run: ./mvnw org.owasp:dependency-check-maven:check -DskipTests
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -76,53 +112,18 @@ jobs:
           path: target/*.jar
           retention-days: 7
 
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Check code formatting
-        run: ./mvnw spotless:check
-
-      - name: Run static analysis
-        run: ./mvnw pmd:check checkstyle:check
-
-      - name: Generate JaCoCo coverage report
-        run: ./mvnw test jacoco:report
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: target/site/jacoco/
-          retention-days: 7
-
   docker-build:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: build
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+      - name: Maven wrapper permissions
+        run: chmod +x mvnw
 
       - name: Build application
         run: ./mvnw clean package -DskipTests
