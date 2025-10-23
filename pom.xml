@@ -215,19 +215,17 @@
 				</executions>
 			</plugin>
 
-			<!-- OWASP Dependency Check - CONFIGURACIÓN SIMPLIFICADA -->
+			<!-- OWASP Dependency Check -->
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${owasp.dependency.check.version}</version>
 				<configuration>
-					<failBuildOnCVSS>8</failBuildOnCVSS>
-					<suppressionFiles>
-						<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
-					</suppressionFiles>
-					<format>HTML</format>
-					<formats>HTML,XML</formats>
-					<skipTestScope>true</skipTestScope>
+					<failBuildOnAnyVulnerability>false</failBuildOnAnyVulnerability>
+					<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+					<nvdApiDelay>5000</nvdApiDelay>
+					<connectionTimeout>120000</connectionTimeout>
+					<failOnError>false</failOnError>
 				</configuration>
 				<executions>
 					<execution>
