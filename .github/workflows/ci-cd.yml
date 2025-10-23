@@ -94,11 +94,21 @@ jobs:
           MONGODB_URI: 'mongodb://localhost:27017/test'
 
       - name: Run OWASP dependency check
-        run: ./mvnw dependency-check:check
+        run: |
+          export MAVEN_OPTS="-Xmx2g -XX:MaxPermSize=512m"
+          ./mvnw dependency-check:check -DdependencyCheck.timeout=600 -DconnectionTimeout=120000
         env:
           GOOGLE_CLIENT_ID: 'test-client-id'
           GOOGLE_CLIENT_SECRET: 'test-client-secret'
           MONGODB_URI: 'mongodb://localhost:27017/test'
+
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.html
+          retention-days: 30
 
       - name: Upload quality reports
         uses: actions/upload-artifact@v4
@@ -109,6 +119,7 @@ jobs:
             target/site/jacoco/
             target/pmd.xml
             target/checkstyle-result.xml
+            target/dependency-check-report.xml
           retention-days: 7
 
   build:

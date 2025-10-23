@@ -215,13 +215,30 @@
 				</executions>
 			</plugin>
 
-			<!-- OWASP Dependency Check -->
+			<!-- OWASP Dependency Check - CONFIGURACIÓN MEJORADA -->
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
 				<version>${owasp.dependency.check.version}</version>
 				<configuration>
-					<failBuildOnCVSS>0</failBuildOnCVSS>
+					<failBuildOnCVSS>8</failBuildOnCVSS>
+					<suppressionFiles>
+						<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+					</suppressionFiles>
+					<format>HTML</format>
+					<formats>HTML,XML</formats>
+					<skipTestScope>true</skipTestScope>
+					<dataDirectory>${project.build.directory}/dependency-check-data</dataDirectory>
+					<connectionTimeout>120000</connectionTimeout>
+					<scanSet>
+						<fileSet>
+							<directory>${project.basedir}</directory>
+							<includes>
+								<include>**/*.jar</include>
+								<include>**/pom.xml</include>
+							</includes>
+						</fileSet>
+					</scanSet>
 				</configuration>
 				<executions>
 					<execution>
