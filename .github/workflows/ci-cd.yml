@@ -95,7 +95,7 @@ jobs:
 
       - name: Run OWASP dependency check
         run: |
-          export MAVEN_OPTS="-Xmx2g -XX:MaxPermSize=512m"
+          export MAVEN_OPTS="-Xmx2g"
           ./mvnw dependency-check:check -DdependencyCheck.timeout=600 -DconnectionTimeout=120000
         env:
           GOOGLE_CLIENT_ID: 'test-client-id'
