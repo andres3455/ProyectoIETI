@@ -4,12 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
+@SuppressWarnings("PMD.UseUtilityClass")
 public class ProyectoietiApplication {
-
-  /** Private constructor to prevent instantiation. */
-  private ProyectoietiApplication() {
-    // Utility class pattern
-  }
 
   public static void main(String[] args) {
     SpringApplication.run(ProyectoietiApplication.class, args);
