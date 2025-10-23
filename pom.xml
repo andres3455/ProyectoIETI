@@ -29,8 +29,6 @@
 		<spotless.version>2.43.0</spotless.version>
 		<owasp.dependency.check.version>9.0.9</owasp.dependency.check.version>
 		<spotless-maven-plugin.version>2.43.0</spotless-maven-plugin.version>
-		<!-- NVD API KEY PROPERTY -->
-		<dependency-check.nvd.apiKey>${env.NVD_API_KEY}</dependency-check.nvd.apiKey>
 	</properties>
 
 	<dependencies>
@@ -217,7 +215,7 @@
 				</executions>
 			</plugin>
 
-			<!-- OWASP Dependency Check - CONFIGURACIÓN CORREGIDA -->
+			<!-- OWASP Dependency Check - CONFIGURACIÓN SIMPLIFICADA -->
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
@@ -230,19 +228,6 @@
 					<format>HTML</format>
 					<formats>HTML,XML</formats>
 					<skipTestScope>true</skipTestScope>
-					<dataDirectory>${project.build.directory}/dependency-check-data</dataDirectory>
-					<connectionTimeout>120000</connectionTimeout>
-					<!-- NVD API KEY CONFIGURATION - FORMA CORRECTA -->
-					<nvdApiDelay>2000</nvdApiDelay>
-					<scanSet>
-						<fileSet>
-							<directory>${project.basedir}</directory>
-							<includes>
-								<include>**/*.jar</include>
-								<include>**/pom.xml</include>
-							</includes>
-						</fileSet>
-					</scanSet>
 				</configuration>
 				<executions>
 					<execution>

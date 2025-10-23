@@ -64,7 +64,6 @@ jobs:
       GOOGLE_CLIENT_ID: 'test-client-id'
       GOOGLE_CLIENT_SECRET: 'test-client-secret'
       MONGODB_URI: 'mongodb://localhost:27017/test'
-      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
     steps:
       - name: Checkout code
@@ -97,12 +96,11 @@ jobs:
       - name: Run OWASP dependency check
         run: |
           export MAVEN_OPTS="-Xmx2g"
-          ./mvnw dependency-check:check -DdependencyCheck.timeout=600 -DconnectionTimeout=120000
+          ./mvnw dependency-check:check -Dnvd.api.key=${{ secrets.NVD_API_KEY }} -DconnectionTimeout=120000
         env:
           GOOGLE_CLIENT_ID: 'test-client-id'
           GOOGLE_CLIENT_SECRET: 'test-client-secret'
           MONGODB_URI: 'mongodb://localhost:27017/test'
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
