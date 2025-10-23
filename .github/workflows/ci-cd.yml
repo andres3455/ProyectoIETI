@@ -11,6 +11,7 @@ env:
   GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
   GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
   MONGODB_URI: ${{ secrets.MONGODB_URI }}
+  NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
 jobs:
   test:
