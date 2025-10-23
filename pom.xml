@@ -223,6 +223,9 @@
 				<configuration>
 					<failBuildOnAnyVulnerability>false</failBuildOnAnyVulnerability>
 					<suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+					<nvdApiDelay>5000</nvdApiDelay>
+					<connectionTimeout>120000</connectionTimeout>
+					<failOnError>false</failOnError>
 				</configuration>
 				<executions>
 					<execution>

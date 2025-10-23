@@ -11,48 +11,54 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Event {
   @Id
   @Schema(
-      description = "Unique identifier of the event generated automatically",
-      example = "123e4567-e89b-12d3-a456-426614174000",
-      accessMode = Schema.AccessMode.READ_ONLY)
+          description = "Unique identifier of the event generated automatically",
+          example = "123e4567-e89b-12d3-a456-426614174000",
+          accessMode = Schema.AccessMode.READ_ONLY)
   private String id;
 
   @Schema(
-      description = "Title of the event",
-      example = "Team Meeting",
-      required = true,
-      maxLength = 100)
+          description = "Title of the event",
+          example = "Team Meeting",
+          required = true,
+          maxLength = 100)
   private String title;
 
   @Schema(
-      description = "Detailed description of the event",
-      example = "Weekly team sync meeting to discuss project progress",
-      maxLength = 500)
+          description = "Detailed description of the event",
+          example = "Weekly team sync meeting to discuss project progress",
+          maxLength = 500)
   private String description;
 
   @Schema(description = "Date when the event will occur", example = "2024-12-25", required = true)
   private LocalDate date;
 
   @Schema(
-      description = "Physical or virtual location of the event",
-      example = "Conference Room A",
-      required = true,
-      maxLength = 200)
+          description = "Physical or virtual location of the event",
+          example = "Conference Room A",
+          required = true,
+          maxLength = 200)
   private String location;
 
   @Schema(
-      description = "Category or type of the event",
-      example = "Meeting",
-      allowableValues = {"Meeting", "Conference", "Workshop", "Social", "General"},
-      defaultValue = "General")
+          description = "Category or type of the event",
+          example = "Meeting",
+          allowableValues = {"Meeting", "Conference", "Workshop", "Social", "General"},
+          defaultValue = "General")
   private String category;
 
   @Schema(
-      description = "Timestamp when the event was created in the system",
-      example = "2024-01-15",
-      accessMode = Schema.AccessMode.READ_ONLY)
+          description = "Timestamp when the event was created in the system",
+          example = "2024-01-15",
+          accessMode = Schema.AccessMode.READ_ONLY)
   private LocalDate createdAt;
 
-  public Event() {}
+  /**
+   * Default constructor for Event entity.
+   * Required for MongoDB document mapping and object deserialization.
+   */
+  public Event() {
+    // Default constructor for framework usage
+  }
 
   public Event(String title, String description, LocalDate date, String location, String category) {
     this.id = UUID.randomUUID().toString();
@@ -131,17 +137,17 @@ public class Event {
   @Override
   public String toString() {
     return "Event{"
-        + "id='"
-        + id
-        + '\''
-        + ", title='"
-        + title
-        + '\''
-        + ", date="
-        + date
-        + ", location='"
-        + location
-        + '\''
-        + '}';
+            + "id='"
+            + id
+            + '\''
+            + ", title='"
+            + title
+            + '\''
+            + ", date="
+            + date
+            + ", location='"
+            + location
+            + '\''
+            + '}';
   }
 }
