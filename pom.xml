@@ -230,6 +230,10 @@
 					<skipTestScope>true</skipTestScope>
 					<dataDirectory>${project.build.directory}/dependency-check-data</dataDirectory>
 					<connectionTimeout>120000</connectionTimeout>
+					<!-- NVD API KEY CONFIGURATION -->
+					<!--suppress UnresolvedMavenProperty -->
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<nvdApiDelay>2000</nvdApiDelay>
 					<scanSet>
 						<fileSet>
 							<directory>${project.basedir}</directory>

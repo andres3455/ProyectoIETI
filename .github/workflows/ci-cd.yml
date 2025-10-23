@@ -64,6 +64,7 @@ jobs:
       GOOGLE_CLIENT_ID: 'test-client-id'
       GOOGLE_CLIENT_SECRET: 'test-client-secret'
       MONGODB_URI: 'mongodb://localhost:27017/test'
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
     steps:
       - name: Checkout code
@@ -101,6 +102,7 @@ jobs:
           GOOGLE_CLIENT_ID: 'test-client-id'
           GOOGLE_CLIENT_SECRET: 'test-client-secret'
           MONGODB_URI: 'mongodb://localhost:27017/test'
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
