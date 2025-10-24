@@ -3,6 +3,8 @@ package com.ieti.proyectoieti.controllers;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.ieti.proyectoieti.controllers.dto.TransactionRequest;
+import com.ieti.proyectoieti.controllers.dto.WalletRequest;
 import com.ieti.proyectoieti.models.SharedWallet;
 import com.ieti.proyectoieti.services.WalletService;
 import java.util.*;
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @ExtendWith(MockitoExtension.class)
 class WalletControllerTest {
@@ -34,17 +38,18 @@ class WalletControllerTest {
 
   @Test
   void createWallet_ValidRequest_ReturnsWallet() {
-    Map<String, String> requestBody =
-        Map.of(
-            "name", WALLET_NAME,
-            "creatorId", USER_ID);
+    WalletRequest walletRequest = new WalletRequest();
+    walletRequest.setName(WALLET_NAME);
+    walletRequest.setCreatorId(USER_ID);
 
     when(walletService.createWallet(WALLET_NAME, USER_ID)).thenReturn(testWallet);
 
-    SharedWallet result = walletController.createWallet(requestBody);
+    ResponseEntity<SharedWallet> response = walletController.createWallet(walletRequest);
 
-    assertNotNull(result);
-    assertEquals(WALLET_ID, result.getWalletId());
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(WALLET_ID, response.getBody().getWalletId());
     verify(walletService).createWallet(WALLET_NAME, USER_ID);
   }
 
@@ -55,25 +60,28 @@ class WalletControllerTest {
 
     when(walletService.addParticipant(WALLET_ID, newUserId)).thenReturn(testWallet);
 
-    SharedWallet result = walletController.addParticipant(WALLET_ID, requestBody);
+    ResponseEntity<SharedWallet> response = walletController.addParticipant(WALLET_ID, requestBody);
 
-    assertNotNull(result);
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
     verify(walletService).addParticipant(WALLET_ID, newUserId);
   }
 
   @Test
   void addFunds_ValidRequest_ReturnsWallet() {
     double amount = 100.0;
-    Map<String, Object> requestBody =
-        Map.of(
-            "amount", amount,
-            "userId", USER_ID);
+    TransactionRequest transactionRequest = new TransactionRequest();
+    transactionRequest.setUserId(USER_ID);
+    transactionRequest.setAmount(amount);
 
     when(walletService.addFunds(WALLET_ID, amount, USER_ID)).thenReturn(testWallet);
 
-    SharedWallet result = walletController.addFunds(WALLET_ID, requestBody);
+    ResponseEntity<SharedWallet> response = walletController.addFunds(WALLET_ID, transactionRequest);
 
-    assertNotNull(result);
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
     verify(walletService).addFunds(WALLET_ID, amount, USER_ID);
   }
 
@@ -81,17 +89,18 @@ class WalletControllerTest {
   void spendFunds_ValidRequest_ReturnsWallet() {
     double amount = 50.0;
     String description = "Test expense";
-    Map<String, Object> requestBody =
-        Map.of(
-            "amount", amount,
-            "userId", USER_ID,
-            "description", description);
+    TransactionRequest transactionRequest = new TransactionRequest();
+    transactionRequest.setUserId(USER_ID);
+    transactionRequest.setAmount(amount);
+    transactionRequest.setDescription(description);
 
     when(walletService.spendFunds(WALLET_ID, amount, USER_ID, description)).thenReturn(testWallet);
 
-    SharedWallet result = walletController.spendFunds(WALLET_ID, requestBody);
+    ResponseEntity<SharedWallet> response = walletController.spendFunds(WALLET_ID, transactionRequest);
 
-    assertNotNull(result);
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertNotNull(response.getBody());
     verify(walletService).spendFunds(WALLET_ID, amount, USER_ID, description);
   }
 
@@ -100,10 +109,12 @@ class WalletControllerTest {
     List<SharedWallet> wallets = Arrays.asList(testWallet);
     when(walletService.getUserWallets(USER_ID)).thenReturn(wallets);
 
-    List<SharedWallet> result = walletController.getUserWallets(USER_ID);
+    ResponseEntity<List<SharedWallet>> response = walletController.getUserWallets(USER_ID);
 
-    assertEquals(1, result.size());
-    assertEquals(testWallet, result.get(0));
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(1, response.getBody().size());
+    assertEquals(testWallet, response.getBody().get(0));
   }
 
   @Test
@@ -111,9 +122,11 @@ class WalletControllerTest {
     double balance = 150.0;
     when(walletService.getWalletBalance(WALLET_ID)).thenReturn(balance);
 
-    Map<String, Double> result = walletController.getWalletBalance(WALLET_ID);
+    ResponseEntity<Map<String, Double>> response = walletController.getWalletBalance(WALLET_ID);
 
-    assertEquals(balance, result.get("balance"));
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(balance, response.getBody().get("balance"));
   }
 
   @Test
@@ -121,9 +134,11 @@ class WalletControllerTest {
     double balance = 75.0;
     when(walletService.getParticipantBalance(WALLET_ID, USER_ID)).thenReturn(balance);
 
-    Map<String, Double> result = walletController.getParticipantBalance(WALLET_ID, USER_ID);
+    ResponseEntity<Map<String, Double>> response = walletController.getParticipantBalance(WALLET_ID, USER_ID);
 
-    assertEquals(balance, result.get("balance"));
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(balance, response.getBody().get("balance"));
   }
 
   @Test
@@ -131,19 +146,23 @@ class WalletControllerTest {
     List<SharedWallet> wallets = Arrays.asList(testWallet);
     when(walletService.getAllWallets()).thenReturn(wallets);
 
-    List<SharedWallet> result = walletController.getAllWallets();
+    ResponseEntity<List<SharedWallet>> response = walletController.getAllWallets();
 
-    assertEquals(1, result.size());
-    assertEquals(testWallet, result.get(0));
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(1, response.getBody().size());
+    assertEquals(testWallet, response.getBody().get(0));
   }
 
   @Test
   void deleteWallet_ValidWalletId_ReturnsSuccessMessage() {
     doNothing().when(walletService).deleteWallet(WALLET_ID);
 
-    Map<String, String> result = walletController.deleteWallet(WALLET_ID);
+    ResponseEntity<Map<String, String>> response = walletController.deleteWallet(WALLET_ID);
 
-    assertEquals("Wallet deleted successfully", result.get("message"));
+    assertNotNull(response);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals("Wallet deleted successfully", response.getBody().get("message"));
     verify(walletService).deleteWallet(WALLET_ID);
   }
 }
