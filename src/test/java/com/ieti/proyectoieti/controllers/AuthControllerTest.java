@@ -18,7 +18,13 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(
+        controllers = AuthController.class,
+        properties = {
+                "spring.autoconfigure.exclude=org.springdoc.core.SpringDocConfiguration",
+                "springdoc.api-docs.enabled=false"
+        }
+)
 @Import(SecurityConfig.class)
 class AuthControllerTest {
 
@@ -32,7 +38,7 @@ class AuthControllerTest {
     attributes.put("picture", "http://example.com/pic.jpg");
 
     List<SimpleGrantedAuthority> authorities =
-        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
     return new DefaultOAuth2User(authorities, attributes, "sub");
   }
@@ -42,20 +48,20 @@ class AuthControllerTest {
     OAuth2User oauth2User = createOAuth2User();
 
     mockMvc
-        .perform(get("/api/user/profile").with(oauth2Login().oauth2User(oauth2User)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.name").value("Test User"))
-        .andExpect(jsonPath("$.email").value("test@example.com"))
-        .andExpect(jsonPath("$.picture").value("http://example.com/pic.jpg"))
-        .andExpect(jsonPath("$.sub").value("12345"));
+            .perform(get("/api/user/profile").with(oauth2Login().oauth2User(oauth2User)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Test User"))
+            .andExpect(jsonPath("$.email").value("test@example.com"))
+            .andExpect(jsonPath("$.picture").value("http://example.com/pic.jpg"))
+            .andExpect(jsonPath("$.sub").value("12345"));
   }
 
   @Test
   void getUserProfile_UnauthenticatedUser_ReturnsError() throws Exception {
     mockMvc
-        .perform(get("/api/user/profile"))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(redirectedUrlPattern("**/login"));
+            .perform(get("/api/user/profile"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrlPattern("**/login"));
   }
 
   @Test
@@ -63,16 +69,16 @@ class AuthControllerTest {
     OAuth2User oauth2User = createOAuth2User();
 
     mockMvc
-        .perform(get("/api/auth/status").with(oauth2Login().oauth2User(oauth2User)))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.authenticated").value(true));
+            .perform(get("/api/auth/status").with(oauth2Login().oauth2User(oauth2User)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.authenticated").value(true));
   }
 
   @Test
   void getAuthStatus_UnauthenticatedUser_ReturnsFalse() throws Exception {
     mockMvc
-        .perform(get("/api/auth/status"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.authenticated").value(false));
+            .perform(get("/api/auth/status"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.authenticated").value(false));
   }
 }
