@@ -19,38 +19,38 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-        .authorizeHttpRequests(
-            authz ->
-                authz
-                    .requestMatchers(
-                        "/",
-                        "/health",
-                        "/login",
-                        "/oauth2/**",
-                        "/error",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/v3/api-docs/**",
-                        "/api-docs/**",
-                        "/webjars/**",
-                        "/swagger-resources/**",
-                        "/configuration/**",
-                        "/api/auth/status")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
-        .oauth2Login(
-            oauth2 -> oauth2.loginPage("/login").successHandler(authenticationSuccessHandler()))
-        .logout(
-            logout ->
-                logout
-                    .logoutSuccessUrl("/")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
-                    .permitAll());
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(
+                    session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authorizeHttpRequests(
+                    authz ->
+                            authz
+                                    .requestMatchers(
+                                            "/",
+                                            "/health",
+                                            "/login",
+                                            "/oauth2/**",
+                                            "/error",
+                                            "/swagger-ui/**",
+                                            "/swagger-ui.html",
+                                            "/v3/api-docs/**",
+                                            "/api-docs/**",
+                                            "/webjars/**",
+                                            "/swagger-resources/**",
+                                            "/configuration/**",
+                                            "/api/auth/status")
+                                    .permitAll()
+                                    .anyRequest()
+                                    .authenticated())
+            .oauth2Login(
+                    oauth2 -> oauth2.loginPage("/login").successHandler(authenticationSuccessHandler()))
+            .logout(
+                    logout ->
+                            logout
+                                    .logoutSuccessUrl("/")
+                                    .invalidateHttpSession(true)
+                                    .deleteCookies("JSESSIONID")
+                                    .permitAll());
 
     return http.build();
   }
@@ -58,10 +58,15 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+    configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "https://*.github.io"
+    ));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("*"));
     configuration.setAllowCredentials(true);
+    configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", configuration);
@@ -71,7 +76,7 @@ public class SecurityConfig {
   @Bean
   public AuthenticationSuccessHandler authenticationSuccessHandler() {
     return (request, response, authentication) -> {
-      response.sendRedirect("/api/user/profile");
+      response.sendRedirect("/api/auth/status");
     };
   }
 }
