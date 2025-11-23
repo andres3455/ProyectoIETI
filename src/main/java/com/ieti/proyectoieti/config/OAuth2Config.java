@@ -12,30 +12,34 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 @Configuration
 public class OAuth2Config {
 
-  @Value("${spring.security.oauth2.client.registration.google.client-id}")
+  @Value("${spring.security.oauth2.client.registration.google.client-id:}")
   private String clientId;
 
-  @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+  @Value("${spring.security.oauth2.client.registration.google.client-secret:}")
   private String clientSecret;
 
   @Bean
   public ClientRegistrationRepository clientRegistrationRepository() {
+    if (clientId == null || clientId.isEmpty() || clientSecret == null || clientSecret.isEmpty()) {
+      return registrationId -> null;
+    }
+
     return new InMemoryClientRegistrationRepository(this.googleClientRegistration());
   }
 
   private ClientRegistration googleClientRegistration() {
     return ClientRegistration.withRegistrationId("google")
-        .clientId(clientId)
-        .clientSecret(clientSecret)
-        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-        .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
-        .scope("openid", "profile", "email")
-        .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
-        .tokenUri("https://www.googleapis.com/oauth2/v4/token")
-        .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
-        .userNameAttributeName("sub")
-        .clientName("Google")
-        .build();
+            .clientId(clientId)
+            .clientSecret(clientSecret)
+            .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+            .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+            .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+            .scope("openid", "profile", "email")
+            .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+            .tokenUri("https://www.googleapis.com/oauth2/v4/token")
+            .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+            .userNameAttributeName("sub")
+            .clientName("Google")
+            .build();
   }
 }
