@@ -3,8 +3,11 @@ package com.ieti.proyectoieti.controllers;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.when;
 
 import com.ieti.proyectoieti.config.SecurityConfig;
+import com.ieti.proyectoieti.models.User;
+import com.ieti.proyectoieti.services.UserService;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
@@ -30,6 +34,9 @@ class AuthControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
+  @MockBean
+  private UserService userService;
+
   private OAuth2User createOAuth2User() {
     Map<String, Object> attributes = new HashMap<>();
     attributes.put("sub", "12345");
@@ -47,13 +54,21 @@ class AuthControllerTest {
   void getUserProfile_AuthenticatedUser_ReturnsUserProfile() throws Exception {
     OAuth2User oauth2User = createOAuth2User();
 
+    // Mock the UserService behavior
+    User mockUser = new User("12345", "Test User", "test@example.com", "http://example.com/pic.jpg");
+    mockUser.setId("user-123");
+
+    when(userService.createOrUpdateUser("12345", "Test User", "test@example.com", "http://example.com/pic.jpg"))
+            .thenReturn(mockUser);
+
     mockMvc
             .perform(get("/api/user/profile").with(oauth2Login().oauth2User(oauth2User)))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value("user-123"))
             .andExpect(jsonPath("$.name").value("Test User"))
             .andExpect(jsonPath("$.email").value("test@example.com"))
             .andExpect(jsonPath("$.picture").value("http://example.com/pic.jpg"))
-            .andExpect(jsonPath("$.sub").value("12345"));
+            .andExpect(jsonPath("$.providerUserId").value("12345"));
   }
 
   @Test
