@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  variables:
+    MAVEN_OPTS: "-Dmaven.test.failure.ignore=false"
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto21
+    commands:
+      - echo "Concediendo permisos de ejecución al wrapper de Maven..."
+      - chmod +x mvnw
+      - echo "Descargando dependencias y plugins..."
+      - ./mvnw dependency:go-offline
+  pre_build:
+    commands:
+      - echo "La fase pre_build se ha integrado en build para evitar redundancias."
+  build:
+    commands:
+      - echo "Ejecutando compilación, pruebas unitarias, análisis de código y empaquetado..."
+      # 'verify' ejecuta en orden: validate, compile, test, package, verify.
+      # Esto activará JaCoCo, PMD, Checkstyle, Spotless y generará el JAR en /target.
+      - ./mvnw verify --batch-mode
+  post_build:
+    commands:
+      - echo "Build finalizado con éxito."
+artifacts:
+  files:
+    # Captura el JAR ejecutable generado (Spring Boot)
+    - target/*.jar
+  discard-paths: yes
+cache:
+  paths:
+    # Caché del repositorio local de Maven para acelerar futuros builds
+    - '/root/.m2/repository'
