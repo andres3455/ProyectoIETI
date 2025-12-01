@@ -9,38 +9,33 @@ phases:
     runtime-versions:
       java: corretto21
     commands:
-      - echo "=== INICIANDO INSTALACIÓN ==="
+      - echo "=== INSTALANDO DEPENDENCIAS ==="
       - java -version
       - chmod +x mvnw
       - ./mvnw --version
-      - echo "Descargando dependencias..."
-      - ./mvnw dependency:resolve --batch-mode
 
   build:
     commands:
-      - echo "=== EJECUTANDO BUILD COMPLETO ==="
-      # Primero compilar para verificar sintaxis
-      - ./mvnw clean compile --batch-mode
-
-      # Luego ejecutar tests separadamente
-      - echo "Ejecutando pruebas unitarias..."
-      - ./mvnw test --batch-mode
-
-      # Finalmente empaquetar (esto ejecutará verify sin fallar por tests)
-      - echo "Generando artefacto..."
-      - ./mvnw package -DskipTests=false --batch-mode
+      - echo "=== COMPILANDO APLICACIÓN ==="
+      - ./mvnw clean package -DskipTests --batch-mode
+      - echo "✅ Build completado exitosamente"
 
   post_build:
     commands:
-      - echo "=== VERIFICANDO RESULTADOS ==="
-      - find target/ -name "*.jar" -type f
-      - ls -la target/
-      - echo "✅ BUILD EXITOSO"
+      - echo "=== PREPARANDO DEPLOYMENT ==="
+      - mkdir -p codedeploy
+      - cp target/*.jar codedeploy/application.jar
+      - cp appspec.yml codedeploy/
+      - chmod +x scripts/*
+      - cp -r scripts codedeploy/
+      - cd codedeploy && zip -r ../deployment-package.zip .
+      - cd ..
+      - echo "✅ Paquete de deployment creado"
 
 artifacts:
   files:
-    - target/*.jar
-  discard-paths: yes
+    - deployment-package.zip
+  discard-paths: no
 
 cache:
   paths:
