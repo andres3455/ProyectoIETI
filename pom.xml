@@ -87,12 +87,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- SpringDoc OpenAPI actualizado para compatibilidad con Spring Boot 3.2.2 -->
-		<dependency>
-			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.7.0</version>
-		</dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
+        </dependency>
 
 	</dependencies>
 
