@@ -1,18 +1,20 @@
 #!/bin/bash
-echo "=== INSTALANDO DEPENDENCIAS DEL SISTEMA ==="
+echo "=== INSTALANDO DEPENDENCIAS EN AMAZON LINUX ==="
 
 # Actualizar sistema
-sudo apt-get update -y
+sudo yum update -y
 
-# Instalar Java 21
-sudo apt-get install -y fontconfig openjdk-21-jre
+# Instalar Java 21 en Amazon Linux
+sudo yum install -y java-21-amazon-corretto-devel
 
 # Verificar instalación
+echo "Java version:"
 java -version
-echo "✅ Java instalado correctamente"
+echo "JAVA_HOME:"
+echo $JAVA_HOME
 
-# Crear directorio de la aplicación
-sudo mkdir -p /home/ubuntu/app
-sudo chown ubuntu:ubuntu /home/ubuntu/app
+# Configurar JAVA_HOME
+export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto
+echo "export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto" >> ~/.bashrc
 
-echo "✅ Dependencias instaladas correctamente"
+echo "✅ Dependencias instaladas en Amazon Linux"
