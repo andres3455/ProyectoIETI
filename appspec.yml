@@ -3,26 +3,22 @@ os: linux
 
 files:
   - source: application.jar
-    destination: /home/ubuntu/app
+    destination: /home/ec2-user/app
   - source: scripts
-    destination: /home/ubuntu
+    destination: /home/ec2-user
 
 permissions:
-  - object: /home/ubuntu/scripts
+  - object: /home/ec2-user
     pattern: "**"
-    owner: ubuntu
-    group: ubuntu
+    owner: ec2-user
+    group: ec2-user
     mode: 755
-  - object: /home/ubuntu/app
-    pattern: "**"
-    owner: ubuntu
-    group: ubuntu
 
 hooks:
   ApplicationStop:
     - location: scripts/stop_server.sh
-      timeout: 30
-      runas: ubuntu
+      timeout: 60
+      runas: ec2-user
 
   BeforeInstall:
     - location: scripts/install_dependencies.sh
@@ -31,15 +27,15 @@ hooks:
 
   AfterInstall:
     - location: scripts/set_permissions.sh
-      timeout: 60
+      timeout: 120
       runas: root
 
   ApplicationStart:
     - location: scripts/start_server.sh
-      timeout: 30
-      runas: ubuntu
+      timeout: 120
+      runas: ec2-user
 
   ValidateService:
     - location: scripts/validate_service.sh
-      timeout: 30
-      runas: ubuntu
+      timeout: 60
+      runas: ec2-user

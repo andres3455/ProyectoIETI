@@ -1,30 +1,41 @@
 #!/bin/bash
-echo "=== INICIANDO APLICACIÓN ==="
+echo "=== INICIANDO APLICACIÓN EN AMAZON LINUX ==="
 
-# Detener instancia previa si existe
-pkill -f 'java.*application.jar' || true
-
-# Esperar un poco
-sleep 5
-
-# Navegar al directorio de la app
-cd /home/ubuntu/app
-
-# Exportar variables de entorno si es necesario
+# Configurar variables
 export SPRING_PROFILES_ACTIVE=production
 export SERVER_PORT=80
 
-# Iniciar la aplicación en background y redirigir logs
+# Navegar al directorio
+cd /home/ec2-user/app
+
+# Verificar JAR
+if [ ! -f "application.jar" ]; then
+    echo "❌ ERROR: application.jar no encontrado"
+    exit 1
+fi
+
+# Detener aplicación previa
+pkill -f "java.*application.jar" || echo "No hay aplicación previa"
+sleep 5
+
+# Iniciar aplicación
+echo "Iniciando aplicación Spring Boot..."
 nohup java -jar application.jar > /var/log/myapp/app.log 2>&1 &
 
-# Esperar a que la aplicación inicie
-sleep 15
+# Esperar y verificar
+sleep 10
 
-# Verificar que esté corriendo
-if pgrep -f 'java.*application.jar' > /dev/null; then
-    echo "✅ Aplicación iniciada correctamente"
-    echo "PID: $(pgrep -f 'java.*application.jar')"
+if pgrep -f "java.*application.jar" > /dev/null; then
+    echo "✅ Aplicación iniciada - PID: $(pgrep -f 'java.*application.jar')"
+    sleep 20
+
+    if curl -s http://localhost:80/actuator/health > /dev/null; then
+        echo "✅ Aplicación respondiendo correctamente"
+    else
+        echo "⚠️  Aplicación iniciada pero no responde aún"
+    fi
 else
-    echo "❌ Error al iniciar la aplicación"
+    echo "❌ ERROR: No se pudo iniciar la aplicación"
+    tail -20 /var/log/myapp/app.log
     exit 1
 fi
