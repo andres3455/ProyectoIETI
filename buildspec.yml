@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     MAVEN_OPTS: "-Xmx2048m -XX:MaxMetaspaceSize=512m"
-    # ESTOS 4 VALORES SE CONFIGURAN EN CODEBUILD CONSOLE
+    # AGREGAR ESTAS 4 LÍNEAS
     GOOGLE_CLIENT_ID: ""
     GOOGLE_CLIENT_SECRET: ""
     SPOTIFY_CLIENT_ID: ""
@@ -14,86 +14,47 @@ phases:
     runtime-versions:
       java: corretto21
     commands:
+      - echo "=== INSTALANDO DEPENDENCIAS ==="
+      - java -version
       - chmod +x mvnw
+      - ./mvnw --version
 
   build:
     commands:
-      # Solo compilar
+      - echo "=== COMPILANDO APLICACIÓN ==="
       - ./mvnw clean package -DskipTests --batch-mode
-      - echo "✅ Build completado"
+      - echo "✅ Build completado exitosamente"
 
   post_build:
     commands:
-      - echo "=== CREANDO PAQUETE DE DEPLOYMENT ==="
-
-      # 1. Crear estructura
+      - echo "=== PREPARANDO DEPLOYMENT ==="
       - mkdir -p codedeploy
-
-      # 2. Copiar JAR
       - cp target/*.jar codedeploy/application.jar
-
-      # 3. Copiar APPSPEC
       - cp appspec.yml codedeploy/
+      - chmod +x scripts/*
+      - cp -r scripts codedeploy/
 
-      # 4. Crear ARCHIVO DE SECRETS SEPARADO
-      - cat > codedeploy/application-secrets.properties << EOF
-# Secrets inyectados durante el build
-# NO MODIFICAR MANUALMENTE
-  GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-  GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-  SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
-  SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
-  EOF
+      # AGREGAR: Crear archivo de secrets
+      - echo "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" > codedeploy/application-secrets.env
+      - echo "GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" >> codedeploy/application-secrets.env
+      - echo "SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}" >> codedeploy/application-secrets.env
+      - echo "SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}" >> codedeploy/application-secrets.env
 
-# 5. Crear SCRIPT PEQUEÑO para cargar secrets (se ejecuta antes de start_server.sh)
-- cat > codedeploy/scripts/load_secrets.sh << 'EOF'
-#!/bin/bash
-# Script simple para cargar secrets
-  echo "Cargando secrets..."
-  
-  SECRETS_FILE="/home/ec2-user/application-secrets.properties"
-  if [ -f "$SECRETS_FILE" ]; then
-  # Leer y exportar variables
-  while IFS='=' read -r key value; do
-  if [[ ! $key =~ ^# ]] && [[ -n $key ]]; then
-  export "$key"="$value"
-  echo "✓ $key configurado"
-  fi
-  done < "$SECRETS_FILE"
-  
-  # Configurar redirect URI dinámico
-  PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
-  export SPOTIFY_REDIRECT_URI="http://${PUBLIC_IP}:8080/callback"
-echo "✓ SPOTIFY_REDIRECT_URI: $SPOTIFY_REDIRECT_URI"
-  else
-  echo "⚠️  Archivo de secrets no encontrado"
-  fi
-  EOF
-  
-  # 6. Copiar TUS SCRIPTS EXISTENTES
-  - chmod +x scripts/*
-  - cp -r scripts codedeploy/
-  
-  # 7. Modificar TU start_server.sh para usar load_secrets.sh
-  - cat >> codedeploy/scripts/start_server.sh << 'EOF'
-  
-  # ============================================
-  # SECCION AGREGADA PARA CARGAR SECRETS
-  # ============================================
-  if [ -f "/home/ec2-user/scripts/load_secrets.sh" ]; then
-  echo "=== CARGANDO SECRETS ==="
-  source /home/ec2-user/scripts/load_secrets.sh
-  fi
-  # ============================================
-  EOF
-  
-  # 8. Dar permisos al nuevo script
-  - chmod +x codedeploy/scripts/load_secrets.sh
-  
-  # 9. Crear ZIP
-  - cd codedeploy && zip -r ../deployment-package.zip .
-  - echo "✅ Paquete creado con secrets"
+      # AGREGAR: Crear script load_secrets.sh simple
+      - echo '#!/bin/bash' > codedeploy/scripts/load_secrets.sh
+      - echo '[ -f "/home/ec2-user/application-secrets.env" ] && source /home/ec2-user/application-secrets.env' >> codedeploy/scripts/load_secrets.sh
+      - echo 'export SPOTIFY_REDIRECT_URI="http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo localhost):8080/callback"' >> codedeploy/scripts/load_secrets.sh
+      - chmod +x codedeploy/scripts/load_secrets.sh
+
+      - cd codedeploy && zip -r ../deployment-package.zip .
+      - cd ..
+      - echo "✅ Paquete de deployment creado"
 
 artifacts:
   files:
     - deployment-package.zip
+  discard-paths: no
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
