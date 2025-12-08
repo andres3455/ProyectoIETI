@@ -27,11 +27,24 @@ hooks:
       runas: root
 
   AfterInstall:
+    - location: scripts/configure_nginx.sh
+      timeout: 120
+      runas: root
     - location: scripts/set_permissions.sh
       timeout: 120
       runas: root
 
   ApplicationStart:
     - location: scripts/start_server.sh
-      timeout: 180  # 3 minutos para iniciar
+      timeout: 300
+      runas: ec2-user
+
+  ApplicationStop:
+    - location: scripts/stop_server.sh
+      timeout: 120
+      runas: ec2-user
+
+  ValidateService:
+    - location: scripts/validate_server.sh
+      timeout: 120
       runas: ec2-user
