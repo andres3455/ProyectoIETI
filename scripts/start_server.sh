@@ -1,35 +1,19 @@
 #!/bin/bash
-echo "=== INICIANDO APLICACIÓN ==="
+echo "=== INICIANDO APLICACIÓN SPRING BOOT ==="
 set -e
 
-# Cargar secrets antes de iniciar
-[ -f "/home/ec2-user/load_secrets.sh" ] && source /home/ec2-user/load_secrets.sh
-
-# === VERIFICAR QUE LOS SECRETS SE CARGARON ===
-echo "=== VERIFICANDO SECRETS ==="
-if [ -z "$GOOGLE_CLIENT_ID" ]; then
-    echo "❌ ERROR: GOOGLE_CLIENT_ID no se cargó"
-    echo "Archivo /home/ec2-user/application-secrets.env existe?: $(ls -la /home/ec2-user/application-secrets.env 2>/dev/null || echo 'NO')"
-    exit 1
+# Cargar secrets (solo Google)
+if [ -f "/home/ec2-user/load_secrets.sh" ]; then
+    source /home/ec2-user/load_secrets.sh
 fi
-
-if [ -z "$SPOTIFY_CLIENT_ID" ]; then
-    echo "❌ ERROR: SPOTIFY_CLIENT_ID no se cargó"
-    exit 1
-fi
-
-echo "✅ Secrets cargados:"
-echo "   GOOGLE_CLIENT_ID: [${#GOOGLE_CLIENT_ID} caracteres]"
-echo "   SPOTIFY_CLIENT_ID: [${#SPOTIFY_CLIENT_ID} caracteres]"
-echo "   SPOTIFY_REDIRECT_URI: $SPOTIFY_REDIRECT_URI"
 
 # 1. VERIFICAR JAVA
 echo "Verificando Java..."
 java -version
 
-# 2. VERIFICAR Y CONFIGURAR DIRECTORIO
+# 2. DIRECTORIO Y ARCHIVO
 cd /home/ec2-user/app
-echo "Directorio actual: $(pwd)"
+echo "Directorio: $(pwd)"
 ls -la
 
 if [ ! -f "application.jar" ]; then
@@ -39,84 +23,79 @@ fi
 
 echo "JAR encontrado. Tamaño: $(du -h application.jar | cut -f1)"
 
-# 3. DETENER APLICACIÓN EXISTENTE (sin sudo, usando pkill normal)
+# 3. DETENER APLICACIÓN EXISTENTE
 echo "Deteniendo aplicación existente..."
 pkill -f "java.*application.jar" 2>/dev/null || echo "No había aplicación corriendo"
 sleep 3
 
 # Verificar que no queden procesos
 if pgrep -f "application.jar" > /dev/null; then
-    echo "Forzando terminación de procesos restantes..."
+    echo "Forzando terminación..."
     pkill -9 -f "application.jar"
     sleep 2
 fi
 
-# 4. CONFIGURAR LOGS (asegurar permisos)
+# 4. CONFIGURAR LOGS
 LOG_FILE="/var/log/myapp/app.log"
-sudo touch $LOG_FILE 2>/dev/null || true
-sudo chown ec2-user:ec2-user $LOG_FILE 2>/dev/null || true
-sudo chmod 644 $LOG_FILE 2>/dev/null || true
+sudo touch "$LOG_FILE" 2>/dev/null || true
+sudo chown ec2-user:ec2-user "$LOG_FILE" 2>/dev/null || true
+sudo chmod 644 "$LOG_FILE" 2>/dev/null || true
 
-# 5. INICIAR APLICACIÓN
-echo "=== NUEVO DEPLOYMENT - $(date) ===" > $LOG_FILE
-echo "Iniciando Spring Boot en puerto 80..."
+# 5. INICIAR APLICACIÓN EN PUERTO 8080
+echo "=== $(date) - INICIANDO SPRING BOOT ===" >> "$LOG_FILE"
+echo "Iniciando Spring Boot en puerto 8080..."
 
+# Variables de entorno para Spring Boot
+export SERVER_PORT=8080
 export SPRING_PROFILES_ACTIVE=production
-export SERVER_PORT=80
 
-# Usar & en lugar de nohup para mejor control
-java -jar application.jar >> $LOG_FILE 2>&1 &
+# Iniciar aplicación
+java -jar application.jar \
+    --server.port=${SERVER_PORT} \
+    --spring.profiles.active=${SPRING_PROFILES_ACTIVE} >> "$LOG_FILE" 2>&1 &
+
 APP_PID=$!
-echo "PID asignado: $APP_PID"
+echo "✅ Proceso iniciado (PID: $APP_PID)"
 
-# 6. VERIFICAR QUE EL PROCESO INICIÓ
-sleep 5
-if ! ps -p $APP_PID > /dev/null 2>&1; then
-    echo "❌ ERROR: Proceso no se mantuvo vivo"
-    echo "=== ÚLTIMAS 30 LÍNEAS DEL LOG ==="
-    tail -30 $LOG_FILE 2>/dev/null || echo "No se pudo leer el log"
-    exit 1
-fi
+# 6. ESPERAR INICIALIZACIÓN
+echo "Esperando que la aplicación inicie (30 segundos)..."
+sleep 30
 
-echo "✅ Proceso iniciado correctamente (PID: $APP_PID)"
+# 7. VERIFICAR HEALTH CHECK
+echo "Realizando health check..."
+MAX_RETRIES=10
+RETRY_INTERVAL=6
 
-# 7. ESPERAR Y VERIFICAR HEALTH CHECK
-echo "Esperando que la aplicación inicie (máximo 90 segundos)..."
-for i in {1..18}; do  # 18 intentos * 5 segundos = 90 segundos
-    echo "Intento $i/18..."
+for i in $(seq 1 $MAX_RETRIES); do
+    echo "Intento $i/$MAX_RETRIES..."
 
-    # Verificar si el proceso sigue vivo
-    if ! ps -p $APP_PID > /dev/null 2>&1; then
+    # Verificar si proceso sigue vivo
+    if ! ps -p $APP_PID > /dev/null; then
         echo "❌ Proceso murió"
-        tail -50 $LOG_FILE 2>/dev/null || echo "No se pudo leer el log"
+        echo "=== ÚLTIMAS 30 LÍNEAS DEL LOG ==="
+        tail -30 "$LOG_FILE"
         exit 1
     fi
 
-    # Intentar health check (puerto 80)
-    if curl -s --max-time 5 http://localhost:80/actuator/health > /dev/null 2>&1; then
-        echo "✅ ✅ APLICACIÓN INICIADA Y RESPONDE CORRECTAMENTE"
-        echo "Health check exitoso en puerto 80"
+    # Intentar health check en puerto 8080
+    if curl -s -f --max-time 5 http://localhost:8080/actuator/health > /dev/null 2>&1; then
+        echo "✅ ✅ APLICACIÓN INICIADA CORRECTAMENTE"
+        echo "✅ Spring Boot responde en: http://localhost:8080"
+        echo "✅ Nginx proxy en: http://localhost:80"
         exit 0
     fi
 
-    # Intentar en puerto 8080 (fallback común de Spring Boot)
-    if curl -s --max-time 5 http://localhost:8080/actuator/health > /dev/null 2>&1; then
-        echo "✅ APLICACIÓN INICIADA en puerto 8080"
-        echo "NOTA: La aplicación está en puerto 8080, no 80"
-        exit 0
-    fi
-
-    sleep 5
+    sleep $RETRY_INTERVAL
 done
 
-echo "⚠️  Aplicación inició pero no responde después de 90 segundos"
-echo "Proceso aún vivo: $(ps -p $APP_PID > /dev/null 2>&1 && echo "Sí" || echo "No")"
-echo "=== ÚLTIMAS 100 LÍNEAS DEL LOG ==="
-tail -100 $LOG_FILE 2>/dev/null || echo "No se pudo leer el log"
+echo "⚠️ Aplicación inició pero health check falló"
+echo "Proceso vivo: $(ps -p $APP_PID > /dev/null && echo "Sí" || echo "No")"
+echo "=== ÚLTIMAS 50 LÍNEAS DEL LOG ==="
+tail -50 "$LOG_FILE"
 
 # Si el proceso está vivo, considerarlo éxito
-if ps -p $APP_PID > /dev/null 2>&1; then
-    echo "✅ Proceso sigue vivo, deployment parcialmente exitoso"
+if ps -p $APP_PID > /dev/null; then
+    echo "✅ Proceso sigue vivo - Deployment parcialmente exitoso"
     exit 0
 else
     exit 1
