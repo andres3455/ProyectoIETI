@@ -6,6 +6,8 @@ files:
     destination: /home/ec2-user/app
   - source: scripts
     destination: /home/ec2-user
+  - source: application-secrets.env
+    destination: /home/ec2-user
 
 permissions:
   - object: /home/ec2-user/scripts
