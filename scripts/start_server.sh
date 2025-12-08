@@ -5,6 +5,24 @@ set -e
 # Cargar secrets antes de iniciar
 [ -f "/home/ec2-user/load_secrets.sh" ] && source /home/ec2-user/load_secrets.sh
 
+# === VERIFICAR QUE LOS SECRETS SE CARGARON ===
+echo "=== VERIFICANDO SECRETS ==="
+if [ -z "$GOOGLE_CLIENT_ID" ]; then
+    echo "❌ ERROR: GOOGLE_CLIENT_ID no se cargó"
+    echo "Archivo /home/ec2-user/application-secrets.env existe?: $(ls -la /home/ec2-user/application-secrets.env 2>/dev/null || echo 'NO')"
+    exit 1
+fi
+
+if [ -z "$SPOTIFY_CLIENT_ID" ]; then
+    echo "❌ ERROR: SPOTIFY_CLIENT_ID no se cargó"
+    exit 1
+fi
+
+echo "✅ Secrets cargados:"
+echo "   GOOGLE_CLIENT_ID: [${#GOOGLE_CLIENT_ID} caracteres]"
+echo "   SPOTIFY_CLIENT_ID: [${#SPOTIFY_CLIENT_ID} caracteres]"
+echo "   SPOTIFY_REDIRECT_URI: $SPOTIFY_REDIRECT_URI"
+
 # 1. VERIFICAR JAVA
 echo "Verificando Java..."
 java -version
