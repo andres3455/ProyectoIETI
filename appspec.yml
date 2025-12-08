@@ -14,6 +14,7 @@ permissions:
     group: ec2-user
     mode: 755
   - object: /home/ec2-user/app
+    pattern: "**"
     owner: ec2-user
     group: ec2-user
 
@@ -25,10 +26,10 @@ hooks:
 
   AfterInstall:
     - location: scripts/set_permissions.sh
-      timeout: 60
+      timeout: 120
       runas: root
 
   ApplicationStart:
     - location: scripts/start_server.sh
-      timeout: 120
+      timeout: 180  # 3 minutos para iniciar
       runas: ec2-user
