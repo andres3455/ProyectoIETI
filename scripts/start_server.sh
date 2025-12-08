@@ -3,7 +3,7 @@ echo "=== INICIANDO APLICACIÓN ==="
 set -e
 
 # Cargar secrets antes de iniciar
-[ -f "/home/ec2-user/scripts/load_secrets.sh" ] && source /home/ec2-user/scripts/load_secrets.sh
+[ -f "/home/ec2-user/load_secrets.sh" ] && source /home/ec2-user/load_secrets.sh
 
 # 1. VERIFICAR JAVA
 echo "Verificando Java..."
