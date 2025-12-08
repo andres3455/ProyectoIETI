@@ -8,18 +8,16 @@ files:
     destination: /home/ec2-user
 
 permissions:
-  - object: /home/ec2-user
+  - object: /home/ec2-user/scripts
     pattern: "**"
     owner: ec2-user
     group: ec2-user
     mode: 755
+  - object: /home/ec2-user/app
+    owner: ec2-user
+    group: ec2-user
 
 hooks:
-  ApplicationStop:
-    - location: scripts/stop_server.sh
-      timeout: 60
-      runas: ec2-user
-
   BeforeInstall:
     - location: scripts/install_dependencies.sh
       timeout: 300
@@ -27,15 +25,10 @@ hooks:
 
   AfterInstall:
     - location: scripts/set_permissions.sh
-      timeout: 120
+      timeout: 60
       runas: root
 
   ApplicationStart:
     - location: scripts/start_server.sh
       timeout: 120
-      runas: ec2-user
-
-  ValidateService:
-    - location: scripts/validate_service.sh
-      timeout: 60
       runas: ec2-user

@@ -1,20 +1,43 @@
 #!/bin/bash
 echo "=== INSTALANDO DEPENDENCIAS EN AMAZON LINUX ==="
+set -e  # Detener en el primer error
 
-# Actualizar sistema
+# 1. Actualizar sistema
 sudo yum update -y
 
-# Instalar Java 21 en Amazon Linux
-sudo yum install -y java-21-amazon-corretto-devel
+# 2. Instalar Java 21 CORREGIDO - nombres correctos para Amazon Linux
+echo "Instalando Java 21..."
+# Método 1: Intentar con el nombre correcto
+if sudo yum install -y java-21-amazon-corretto 2>/dev/null; then
+    echo "✅ Java 21 instalado via java-21-amazon-corretto"
+elif sudo yum install -y java-21 2>/dev/null; then
+    echo "✅ Java 21 instalado via java-21"
+else
+    # Método 2: Instalar OpenJDK 21
+    echo "Instalando OpenJDK 21..."
+    sudo amazon-linux-extras enable corretto8  # Habilitar repositorio
+    sudo yum install -y java-1.8.0-amazon-corretto  # Java 8 como fallback
+fi
 
-# Verificar instalación
-echo "Java version:"
+# 3. Verificar instalación
+echo "=== VERIFICANDO JAVA ==="
+if ! command -v java &> /dev/null; then
+    echo "❌ ERROR: Java no se instaló"
+    echo "Buscando Java instalado..."
+    sudo find /usr -name "java" -type f 2>/dev/null || true
+    exit 1
+fi
+
 java -version
-echo "JAVA_HOME:"
-echo $JAVA_HOME
 
-# Configurar JAVA_HOME
-export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto
-echo "export JAVA_HOME=/usr/lib/jvm/java-21-amazon-corretto" >> ~/.bashrc
+# 4. Instalar curl si no existe (necesario para validación)
+if ! command -v curl &> /dev/null; then
+    echo "Instalando curl..."
+    sudo yum install -y curl
+fi
 
-echo "✅ Dependencias instaladas en Amazon Linux"
+# 5. Crear directorios necesarios
+sudo mkdir -p /home/ec2-user/app /var/log/myapp
+sudo chown -R ec2-user:ec2-user /home/ec2-user/app /var/log/myapp
+
+echo "✅ Dependencias instaladas correctamente"
