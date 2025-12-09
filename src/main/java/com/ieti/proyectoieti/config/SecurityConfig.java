@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,12 +17,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+  }
+
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(
-                    session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                    session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(
                     authz ->
                             authz
@@ -38,10 +45,12 @@ public class SecurityConfig {
                                             "/webjars/**",
                                             "/swagger-resources/**",
                                             "/configuration/**",
-                                            "/api/auth/status")
+                                            "/api/auth/status",
+                                            "/api/auth/verify")
                                     .permitAll()
                                     .anyRequest()
                                     .authenticated())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .oauth2Login(
                     oauth2 -> oauth2.loginPage("/login").successHandler(authenticationSuccessHandler()))
             .logout(
@@ -60,6 +69,7 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:3000",
+            "http://localhost:7357",
             "http://localhost:8080",
             "https://*.github.io"
     ));
