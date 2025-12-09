@@ -58,11 +58,13 @@ public class AuthController {
       // Create or update user in database
       User user = userService.createOrUpdateUser(providerUserId, name, email, picture);
 
-      // Return user profile
+      // Return user profile with token
       return ResponseEntity.ok(
           Map.of(
               "authenticated",
               true,
+              "token",
+              tokenRequest.getIdToken(), // Return the same token for storage
               "user",
               Map.of(
                   "id", user.getId(),
