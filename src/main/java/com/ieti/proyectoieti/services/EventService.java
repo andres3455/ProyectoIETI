@@ -28,6 +28,11 @@ public class EventService {
     return eventRepository.findAll();
   }
 
+  public Event getEventById(String eventId) {
+    return eventRepository.findById(eventId)
+        .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+  }
+
   public List<Event> getEventsByCategory(String category) {
     return eventRepository.findByCategory(category);
   }

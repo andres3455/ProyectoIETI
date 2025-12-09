@@ -59,7 +59,9 @@ public class SecurityConfig {
                                             "/api/groups/invite/{inviteCode}",
                                             "/api/groups/event/{eventId}",
                                             "/api/events",
-                                            "/api/events/{eventId}")
+                                            "/api/events/{eventId}",
+                                            "/api/events/category/{category}",
+                                            "/api/events/upcoming")
                                     .permitAll()
                                     // All other requests require authentication
                                     .anyRequest()
