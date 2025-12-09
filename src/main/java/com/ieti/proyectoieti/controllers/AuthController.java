@@ -152,4 +152,58 @@ public class AuthController {
     boolean isAuthenticated = principal != null || payload != null;
     return Collections.singletonMap("authenticated", isAuthenticated);
   }
+
+  @Operation(
+      summary = "Refresh authentication token",
+      description =
+          "Validates the current token and returns refreshed user information. Google ID tokens are long-lived, but this endpoint can be used to verify the token is still valid.")
+  @ApiResponse(responseCode = "200", description = "Token is valid, user info returned")
+  @ApiResponse(responseCode = "401", description = "Token is invalid or expired")
+  @PostMapping("/api/auth/refresh")
+  public ResponseEntity<?> refreshToken(@RequestBody TokenRequest tokenRequest) {
+    try {
+      // Verify the Google ID token
+      GoogleIdToken.Payload payload = googleTokenVerifier.verify(tokenRequest.getIdToken());
+
+      if (payload == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(Map.of("error", "Token is invalid or expired", "needsReauth", true));
+      }
+
+      // Extract user information from token
+      String providerUserId = payload.getSubject();
+      String name = (String) payload.get("name");
+      String email = payload.getEmail();
+      String picture = (String) payload.get("picture");
+
+      // Get or update user from database
+      User user = userService.createOrUpdateUser(providerUserId, name, email, picture);
+
+      // Return user profile and token validity info
+      return ResponseEntity.ok(
+          Map.of(
+              "valid",
+              true,
+              "user",
+              Map.of(
+                  "id", user.getId(),
+                  "name", user.getName(),
+                  "email", user.getEmail(),
+                  "picture", user.getPicture(),
+                  "providerUserId", user.getProviderUserId(),
+                  "groupIds", user.getGroupIds(),
+                  "createdAt", user.getCreatedAt()),
+              "tokenInfo",
+              Map.of(
+                  "expiresAt", payload.getExpirationTimeSeconds(),
+                  "issuedAt", payload.getIssuedAtTimeSeconds())));
+
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(
+              Map.of(
+                  "error", "Token validation failed: " + e.getMessage(),
+                  "needsReauth", true));
+    }
+  }
 }

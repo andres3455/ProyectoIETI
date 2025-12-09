@@ -1,5 +1,6 @@
 package com.ieti.proyectoieti.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(
                     authz ->
                             authz
+                                    // Public endpoints - no authentication required
                                     .requestMatchers(
                                             "/",
                                             "/health",
@@ -46,8 +48,20 @@ public class SecurityConfig {
                                             "/swagger-resources/**",
                                             "/configuration/**",
                                             "/api/auth/status",
-                                            "/api/auth/verify")
+                                            "/api/auth/verify",
+                                            "/api/auth/refresh")
                                     .permitAll()
+                                    // Read-only endpoints - can be accessed without auth for browsing
+                                    .requestMatchers(
+                                            "GET",
+                                            "/api/groups",
+                                            "/api/groups/{groupId}",
+                                            "/api/groups/invite/{inviteCode}",
+                                            "/api/groups/event/{eventId}",
+                                            "/api/events",
+                                            "/api/events/{eventId}")
+                                    .permitAll()
+                                    // All other requests require authentication
                                     .anyRequest()
                                     .authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -59,7 +73,20 @@ public class SecurityConfig {
                                     .logoutSuccessUrl("/")
                                     .invalidateHttpSession(true)
                                     .deleteCookies("JSESSIONID")
-                                    .permitAll());
+                                    .permitAll())
+            // Configure exception handling for authentication failures
+            .exceptionHandling(
+                    exceptions ->
+                            exceptions
+                                    .authenticationEntryPoint(
+                                            (request, response, authException) -> {
+                                              response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                              response.setContentType("application/json");
+                                              response
+                                                  .getWriter()
+                                                  .write(
+                                                      "{\"error\":\"Unauthorized\",\"message\":\"Authentication required\"}");
+                                            }));
 
     return http.build();
   }
