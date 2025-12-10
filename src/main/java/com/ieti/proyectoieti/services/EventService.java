@@ -51,4 +51,8 @@ public class EventService {
     }
     eventRepository.deleteById(eventId);
   }
+
+  public List<Event> saveAll(List<Event> events) {
+      return eventRepository.saveAll(events);
+  }
 }

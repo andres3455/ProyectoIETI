@@ -49,7 +49,8 @@ public class SecurityConfig {
                                             "/configuration/**",
                                             "/api/auth/status",
                                             "/api/auth/verify",
-                                            "/api/auth/refresh")
+                                            "/api/auth/refresh",
+                                            "/api/events/bulk")
                                     .permitAll()
                                     // Read-only endpoints - can be accessed without auth for browsing
                                     .requestMatchers(

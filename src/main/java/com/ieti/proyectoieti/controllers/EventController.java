@@ -178,4 +178,32 @@ public class EventController {
           .body(Map.of("error", "Failed to delete event", "message", e.getMessage()));
     }
   }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<?> uploadEventsBulk(@RequestBody List<Event> events) {
+
+        if (events == null || events.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Event list is empty"));
+        }
+
+        List<Event> recreated = events.stream()
+                .map(e -> new Event(
+                        e.getTitle(),
+                        e.getDescription(),
+                        e.getDate(),
+                        e.getLocation(),
+                        e.getCategory()
+                ))
+                .toList();
+
+        List<Event> saved = eventService.saveAll(recreated);
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "Events uploaded successfully",
+                        "count", saved.size()
+                )
+        );
+    }
+
 }
