@@ -107,4 +107,13 @@ public class EventService {
     Event event = getEventById(eventId);
     return event.getAttendeeIds();
   }
+
+  /**
+   * Gets all events where the specified user has confirmed attendance
+   * @param userId The ID of the user
+   * @return List of events the user is attending
+   */
+  public List<Event> getEventsByAttendee(String userId) {
+    return eventRepository.findByAttendeeIdsContaining(userId);
+  }
 }

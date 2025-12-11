@@ -13,4 +13,6 @@ public interface EventRepository extends MongoRepository<Event, String> {
   List<Event> findByDateAfter(LocalDate date);
 
   List<Event> findByLocationContainingIgnoreCase(String location);
+
+  List<Event> findByAttendeeIdsContaining(String userId);
 }

@@ -321,4 +321,35 @@ public class EventController {
     }
   }
 
+  @Operation(
+      summary = "Get user's confirmed events",
+      description = "Retrieves all events where the authenticated user has confirmed attendance. Requires authentication.")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "User's confirmed events retrieved successfully"),
+    @ApiResponse(responseCode = "401", description = "User not authenticated")
+  })
+  @GetMapping("/user/confirmed")
+  public ResponseEntity<?> getUserConfirmedEvents(HttpServletRequest request) {
+
+    String authenticatedUserId = (String) request.getAttribute("authenticatedUserId");
+    String authenticatedUserEmail = (String) request.getAttribute("authenticatedUserEmail");
+
+    if (authenticatedUserId == null) {
+      logger.warn("Attempt to fetch confirmed events without authentication");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "Authentication required", "message", "Please log in to view your confirmed events"));
+    }
+
+    logger.info("User {} ({}) fetching confirmed events", authenticatedUserEmail, authenticatedUserId);
+
+    try {
+      List<Event> events = eventService.getEventsByAttendee(authenticatedUserId);
+      return ResponseEntity.ok(events);
+    } catch (Exception e) {
+      logger.error("Error fetching confirmed events for user {}: {}", authenticatedUserId, e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "Failed to fetch confirmed events", "message", e.getMessage()));
+    }
+  }
+
 }
