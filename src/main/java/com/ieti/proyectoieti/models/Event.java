@@ -52,15 +52,21 @@ public class Event {
           accessMode = Schema.AccessMode.READ_ONLY)
   private LocalDate createdAt;
 
+  @Schema(
+          description = "List of user IDs who confirmed attendance to this event",
+          accessMode = Schema.AccessMode.READ_ONLY)
+  private java.util.List<String> attendeeIds;
+
   /**
    * Default constructor for Event entity.
    * Required for MongoDB document mapping and object deserialization.
    */
   public Event() {
-    // Default constructor for framework usage
+    this.attendeeIds = new java.util.ArrayList<>();
   }
 
   public Event(String title, String description, LocalDate date, String location, String category) {
+    this();
     this.id = UUID.randomUUID().toString();
     this.title = title;
     this.description = description;
@@ -134,6 +140,60 @@ public class Event {
     this.createdAt = createdAt;
   }
 
+  @Schema(description = "List of attendee user IDs")
+  public java.util.List<String> getAttendeeIds() {
+    return attendeeIds;
+  }
+
+  public void setAttendeeIds(java.util.List<String> attendeeIds) {
+    this.attendeeIds = attendeeIds;
+  }
+
+  /**
+   * Adds a user to the event's attendee list
+   * @param userId The ID of the user confirming attendance
+   * @return true if the user was added, false if already in the list
+   */
+  public boolean addAttendee(String userId) {
+    if (attendeeIds == null) {
+      attendeeIds = new java.util.ArrayList<>();
+    }
+    if (!attendeeIds.contains(userId)) {
+      attendeeIds.add(userId);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Removes a user from the event's attendee list
+   * @param userId The ID of the user canceling attendance
+   * @return true if the user was removed, false if not in the list
+   */
+  public boolean removeAttendee(String userId) {
+    if (attendeeIds != null) {
+      return attendeeIds.remove(userId);
+    }
+    return false;
+  }
+
+  /**
+   * Gets the count of confirmed attendees
+   * @return number of attendees
+   */
+  public int getAttendeeCount() {
+    return attendeeIds != null ? attendeeIds.size() : 0;
+  }
+
+  /**
+   * Checks if a user is attending this event
+   * @param userId The ID of the user to check
+   * @return true if the user is attending
+   */
+  public boolean isAttending(String userId) {
+    return attendeeIds != null && attendeeIds.contains(userId);
+  }
+
   @Override
   public String toString() {
     return "Event{"
@@ -148,6 +208,8 @@ public class Event {
             + ", location='"
             + location
             + '\''
+            + ", attendees="
+            + getAttendeeCount()
             + '}';
   }
 }

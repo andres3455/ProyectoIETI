@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.ieti.proyectoieti.config.SecurityConfig;
 import com.ieti.proyectoieti.controllers.dto.GroupRequest;
 import com.ieti.proyectoieti.models.Group;
+import com.ieti.proyectoieti.services.EventService;
 import com.ieti.proyectoieti.services.GroupService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -32,6 +33,9 @@ class GroupControllerTest {
 
     @MockBean
     private GroupService groupService;
+
+    @MockBean
+    private EventService eventService;
 
     @Autowired
     private ObjectMapper objectMapper;

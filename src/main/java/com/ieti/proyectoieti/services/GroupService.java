@@ -161,4 +161,33 @@ public class GroupService {
         }
         return code.toString();
     }
+
+    /**
+     * Assigns an event to a group
+     * @param groupId The ID of the group
+     * @param eventId The ID of the event to assign
+     * @return The updated group
+     * @throws IllegalArgumentException if group not found
+     */
+    public Group assignEventToGroup(String groupId, String eventId) {
+        Group group = getGroupById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Group not found with ID: " + groupId));
+        
+        group.setEventId(eventId);
+        return groupRepository.save(group);
+    }
+
+    /**
+     * Removes the event assignment from a group
+     * @param groupId The ID of the group
+     * @return The updated group
+     * @throws IllegalArgumentException if group not found
+     */
+    public Group removeEventFromGroup(String groupId) {
+        Group group = getGroupById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Group not found with ID: " + groupId));
+        
+        group.setEventId(null);
+        return groupRepository.save(group);
+    }
 }

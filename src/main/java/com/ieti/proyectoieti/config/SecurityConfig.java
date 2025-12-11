@@ -61,6 +61,7 @@ public class SecurityConfig {
                                             "/api/groups/event/{eventId}",
                                             "/api/events",
                                             "/api/events/{eventId}",
+                                            "/api/events/{eventId}/attendees",
                                             "/api/events/category/{category}",
                                             "/api/events/upcoming")
                                     .permitAll()

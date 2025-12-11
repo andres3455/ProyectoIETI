@@ -1,7 +1,9 @@
 package com.ieti.proyectoieti.controllers;
 
 import com.ieti.proyectoieti.controllers.dto.GroupRequest;
+import com.ieti.proyectoieti.models.Event;
 import com.ieti.proyectoieti.models.Group;
+import com.ieti.proyectoieti.services.EventService;
 import com.ieti.proyectoieti.services.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,9 +21,11 @@ import org.springframework.web.bind.annotation.*;
 public class GroupController {
 
     private final GroupService groupService;
+    private final EventService eventService;
 
-    public GroupController(GroupService groupService) {
+    public GroupController(GroupService groupService, EventService eventService) {
         this.groupService = groupService;
+        this.eventService = eventService;
     }
 
     @Operation(summary = "Create a new group", description = "Creates a new group for event participation")
@@ -174,5 +178,57 @@ public class GroupController {
     public ResponseEntity<List<Group>> getAllGroups() {
         List<Group> groups = groupService.getAllGroups();
         return ResponseEntity.ok(groups);
+    }
+
+    @Operation(summary = "Assign event to group", description = "Assigns an event to a group for group attendance management")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Event assigned to group successfully"),
+            @ApiResponse(responseCode = "404", description = "Group not found")
+    })
+    @PostMapping("/{groupId}/event/{eventId}")
+    public ResponseEntity<Group> assignEventToGroup(@PathVariable String groupId, @PathVariable String eventId) {
+        Group group = groupService.assignEventToGroup(groupId, eventId);
+        return ResponseEntity.ok(group);
+    }
+
+    @Operation(summary = "Remove event from group", description = "Removes the event assignment from a group")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Event removed from group successfully"),
+            @ApiResponse(responseCode = "404", description = "Group not found")
+    })
+    @DeleteMapping("/{groupId}/event")
+    public ResponseEntity<Group> removeEventFromGroup(@PathVariable String groupId) {
+        Group group = groupService.removeEventFromGroup(groupId);
+        return ResponseEntity.ok(group);
+    }
+
+    @Operation(
+        summary = "Confirm group attendance to assigned event",
+        description = "Confirms attendance for all group members to the group's assigned event")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Group attendance confirmed successfully"),
+            @ApiResponse(responseCode = "400", description = "Group has no assigned event"),
+            @ApiResponse(responseCode = "404", description = "Group or event not found")
+    })
+    @PostMapping("/{groupId}/confirm-attendance")
+    public ResponseEntity<?> confirmGroupAttendanceToEvent(@PathVariable String groupId) {
+        Group group = groupService.getGroupById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Group not found with ID: " + groupId));
+
+        if (group.getEventId() == null || group.getEventId().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Group has no assigned event"));
+        }
+
+        // Confirm attendance for all group members
+        Event event = eventService.confirmGroupAttendance(group.getEventId(), group.getMemberIds());
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Group attendance confirmed successfully",
+                "groupId", groupId,
+                "eventId", event.getId(),
+                "confirmedMembers", group.getMemberCount(),
+                "totalAttendees", event.getAttendeeCount()
+        ));
     }
 }

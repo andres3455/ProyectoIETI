@@ -55,4 +55,56 @@ public class EventService {
   public List<Event> saveAll(List<Event> events) {
       return eventRepository.saveAll(events);
   }
+
+  /**
+   * Confirms a user's attendance to an event
+   * @param eventId The ID of the event
+   * @param userId The ID of the user confirming attendance
+   * @return The updated event
+   * @throws IllegalArgumentException if event not found
+   */
+  public Event confirmAttendance(String eventId, String userId) {
+    Event event = getEventById(eventId);
+    event.addAttendee(userId);
+    return eventRepository.save(event);
+  }
+
+  /**
+   * Cancels a user's attendance to an event
+   * @param eventId The ID of the event
+   * @param userId The ID of the user canceling attendance
+   * @return The updated event
+   * @throws IllegalArgumentException if event not found
+   */
+  public Event cancelAttendance(String eventId, String userId) {
+    Event event = getEventById(eventId);
+    event.removeAttendee(userId);
+    return eventRepository.save(event);
+  }
+
+  /**
+   * Confirms attendance for multiple users to an event
+   * @param eventId The ID of the event
+   * @param userIds List of user IDs confirming attendance
+   * @return The updated event
+   * @throws IllegalArgumentException if event not found
+   */
+  public Event confirmGroupAttendance(String eventId, List<String> userIds) {
+    Event event = getEventById(eventId);
+    for (String userId : userIds) {
+      event.addAttendee(userId);
+    }
+    return eventRepository.save(event);
+  }
+
+  /**
+   * Gets the list of attendees for an event
+   * @param eventId The ID of the event
+   * @return List of user IDs who confirmed attendance
+   * @throws IllegalArgumentException if event not found
+   */
+  public List<String> getEventAttendees(String eventId) {
+    Event event = getEventById(eventId);
+    return event.getAttendeeIds();
+  }
 }
