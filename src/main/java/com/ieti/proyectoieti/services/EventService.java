@@ -116,4 +116,24 @@ public class EventService {
   public List<Event> getEventsByAttendee(String userId) {
     return eventRepository.findByAttendeeIdsContaining(userId);
   }
+
+  /**
+   * Clears all attendees from all events
+   * WARNING: This is a destructive operation - use only for testing/cleanup
+   * @return Number of events updated
+   */
+  public int clearAllAttendees() {
+    List<Event> allEvents = eventRepository.findAll();
+    int updatedCount = 0;
+    
+    for (Event event : allEvents) {
+      if (event.getAttendeeIds() != null && !event.getAttendeeIds().isEmpty()) {
+        event.setAttendeeIds(new java.util.ArrayList<>());
+        eventRepository.save(event);
+        updatedCount++;
+      }
+    }
+    
+    return updatedCount;
+  }
 }

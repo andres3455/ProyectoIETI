@@ -352,4 +352,28 @@ public class EventController {
     }
   }
 
+  @Operation(
+      summary = "Clear all attendees from all events",
+      description = "⚠️ WARNING: Removes all attendees from all events. Public endpoint for one-time cleanup. DELETE THIS ENDPOINT AFTER USE!")
+  @ApiResponse(responseCode = "200", description = "All attendees cleared successfully")
+  @DeleteMapping("/admin/clear-attendees")
+  public ResponseEntity<?> clearAllAttendees() {
+
+    logger.warn("⚠️⚠️⚠️ DANGER: Clearing all attendees from all events - PUBLIC ENDPOINT");
+
+    try {
+      int updatedCount = eventService.clearAllAttendees();
+      logger.info("Successfully cleared attendees from {} events", updatedCount);
+      return ResponseEntity.ok(Map.of(
+          "message", "All attendees cleared successfully",
+          "eventsUpdated", updatedCount,
+          "warning", "⚠️ REMEMBER TO DELETE THIS ENDPOINT AFTER USE!"
+      ));
+    } catch (Exception e) {
+      logger.error("Error clearing all attendees: {}", e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(Map.of("error", "Failed to clear attendees", "message", e.getMessage()));
+    }
+  }
+
 }
