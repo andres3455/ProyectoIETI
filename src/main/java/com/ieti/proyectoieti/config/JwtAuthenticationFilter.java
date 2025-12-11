@@ -1,13 +1,16 @@
 package com.ieti.proyectoieti.config;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.ieti.proyectoieti.models.User;
 import com.ieti.proyectoieti.services.GoogleTokenVerifier;
+import com.ieti.proyectoieti.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,9 +24,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
   private final GoogleTokenVerifier googleTokenVerifier;
+  private final UserService userService;
 
-  public JwtAuthenticationFilter(GoogleTokenVerifier googleTokenVerifier) {
+  public JwtAuthenticationFilter(GoogleTokenVerifier googleTokenVerifier, UserService userService) {
     this.googleTokenVerifier = googleTokenVerifier;
+    this.userService = userService;
   }
 
   @Override
@@ -46,31 +51,46 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         GoogleIdToken.Payload payload = googleTokenVerifier.verify(token);
 
         if (payload != null) {
-          // Create authentication object with user information
-          String userId = payload.getSubject();
+          // Get Google Provider ID and email
+          String providerUserId = payload.getSubject();
           String email = payload.getEmail();
           String name = (String) payload.get("name");
 
-          logger.info("Successfully authenticated user: {} ({})", email, userId);
+          logger.info("Token verified for Google user: {} ({})", email, providerUserId);
 
-          // Create a simple authentication token
-          UsernamePasswordAuthenticationToken authentication =
-              new UsernamePasswordAuthenticationToken(
-                  userId, // Principal (user ID)
-                  null, // Credentials (not needed after verification)
-                  Collections.emptyList() // Authorities (roles)
-                  );
+          // Find the MongoDB user by Provider ID
+          Optional<User> userOptional = userService.getUserByProviderUserId(providerUserId);
+          
+          if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            String mongoUserId = user.getId();
 
-          // Set additional details
-          authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            logger.info("Successfully authenticated user: {} - MongoDB ID: {}, Provider ID: {}", 
+                email, mongoUserId, providerUserId);
 
-          // Set authentication in security context
-          SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Create a simple authentication token with MongoDB user ID
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    mongoUserId, // Principal (MongoDB user ID, not Provider ID)
+                    null, // Credentials (not needed after verification)
+                    Collections.emptyList() // Authorities (roles)
+                    );
 
-          // Store the payload in request attribute for controller access
-          request.setAttribute("googlePayload", payload);
-          request.setAttribute("authenticatedUserId", userId);
-          request.setAttribute("authenticatedUserEmail", email);
+            // Set additional details
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            // Set authentication in security context
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Store MONGODB user ID in request attributes for controller access
+            request.setAttribute("googlePayload", payload);
+            request.setAttribute("authenticatedUserId", mongoUserId); // ← MongoDB ID
+            request.setAttribute("authenticatedUserEmail", email);
+            request.setAttribute("providerUserId", providerUserId); // Also store Provider ID if needed
+          } else {
+            logger.warn("User not found in database for Provider ID: {}", providerUserId);
+            logger.warn("User must call /api/auth/verify first to create account");
+          }
         } else {
           logger.warn("Token verification returned null payload");
         }
